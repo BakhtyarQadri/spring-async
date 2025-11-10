@@ -12,9 +12,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class RmqStcApplication {
 
     private final ObjectMapper jackson;
-    private final String STC_MAIN_QUEUE_NAME = "rmq-stc_main-queue";
-    private final String STC_DLQ_QUEUE_NAME = "rmq-stc_dlq-queue";
-    private final String STC_DLQ_ROUTING_KEY = STC_DLQ_QUEUE_NAME; // incase of default exchange, the routing key MUST match the queue name
+    private final String MAIN_Q_NAME = "rmq-stc_main-queue";
+    private final String DEAD_LETTER_Q_NAME = "rmq-stc_dead-letter-queue";
+    private final String DLQ_ROUTING_KEY = DEAD_LETTER_Q_NAME; // incase of default exchange, the routing key MUST match the queue name
 
     public RmqStcApplication(ObjectMapper jackson) {
         this.jackson = jackson;
@@ -39,13 +39,13 @@ public class RmqStcApplication {
             var channel = connection.createChannel();
 
             // DLQ
-            channel.queueDeclare(STC_DLQ_QUEUE_NAME, true, false, false, null); // durable=true
+            channel.queueDeclare(DEAD_LETTER_Q_NAME, true, false, false, null); // durable=true
             var args = new HashMap<String, Object>();
             args.put("x-dead-letter-exchange", ""); // default exchange
-            args.put("x-dead-letter-routing-key", STC_DLQ_ROUTING_KEY);
+            args.put("x-dead-letter-routing-key", DLQ_ROUTING_KEY);
 
-            channel.queueDeclare(STC_MAIN_QUEUE_NAME, true, false, false, args); // durable=true
-            return new Publisher(channel, STC_MAIN_QUEUE_NAME, jackson);
+            channel.queueDeclare(MAIN_Q_NAME, true, false, false, args); // durable=true
+            return new Publisher(channel, MAIN_Q_NAME, jackson);
         } catch (Exception e) {
             System.out.println("caught exception while configuring publisher queue with dead letter queue: " + e.getMessage());
             return null;
@@ -61,15 +61,15 @@ public class RmqStcApplication {
             var channel = connection.createChannel();
 
             // DLQ
-            channel.queueDeclare(STC_DLQ_QUEUE_NAME, true, false, false, null); // durable=true
+            channel.queueDeclare(DEAD_LETTER_Q_NAME, true, false, false, null); // durable=true
             var args = new HashMap<String, Object>();
             args.put("x-dead-letter-exchange", ""); // default exchange
-            args.put("x-dead-letter-routing-key", STC_DLQ_ROUTING_KEY);
+            args.put("x-dead-letter-routing-key", DLQ_ROUTING_KEY);
 
-            channel.queueDeclare(STC_MAIN_QUEUE_NAME, true, false, false, args); // durable=true
+            channel.queueDeclare(MAIN_Q_NAME, true, false, false, args); // durable=true
             channel.basicQos(1, false);
-            var consumer = new Consumer(channel, STC_MAIN_QUEUE_NAME, jackson);
-            channel.basicConsume(STC_MAIN_QUEUE_NAME, false, consumer); // autoAck=false -> manual ack
+            var consumer = new Consumer(channel, MAIN_Q_NAME, jackson);
+            channel.basicConsume(MAIN_Q_NAME, false, consumer); // autoAck=false -> manual ack
             return consumer;
         } catch (Exception e) {
             System.out.println("caught exception while configuring consumer queue with dead letter queue: " + e.getMessage());

@@ -50,10 +50,10 @@ public class Consumer extends DefaultConsumer {
                     var amqpBasicProperties = new AMQP.BasicProperties.Builder().headers(headers).build(); // .deliveryMode(2) -> persistent
                     channel.basicPublish(directExchangeName, routingKey, amqpBasicProperties, body);
                     channel.basicAck(envelope.getDeliveryTag(), false); // manual acknowledgment for previous msg
-                    System.out.println("Retry attempt: " + retryCount);
+                    System.out.println("retry attempt: " + retryCount);
                 } else { // Max retries exceeded - send to DLQ
                     channel.basicNack(envelope.getDeliveryTag(), false, false); // requeueMsg (lastParam) = false -> send msg to DLQ if configured or dropped AND requeueMsg=true -> requeue the message
-                    System.out.println("Sent to Dead Letter Queue");
+                    System.out.println("sent to dead letter queue");
                 }
             } catch (Exception ex) {
                 System.out.println(e.getMessage());
