@@ -1,4 +1,4 @@
-package com.example.rmqstc;
+package com.example.rmqoffice;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -9,24 +9,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class RmqStcApplication {
+public class RmqOfficeApplication {
 
     private final ObjectMapper jackson;
-    private final String MAIN_Q_NAME = "rmq-stc_main-queue";
-    private final String DEAD_LETTER_Q_NAME = "rmq-stc_dead-letter-queue";
+    private final String MAIN_Q_NAME = "rmq-office_main-queue";
+    private final String DEAD_LETTER_Q_NAME = "rmq-office_dead-letter-queue";
     private final String DLQ_ROUTING_KEY = DEAD_LETTER_Q_NAME; // incase of default exchange, the routing key MUST match the queue name
 
-    public RmqStcApplication(ObjectMapper jackson) {
+    public RmqOfficeApplication(ObjectMapper jackson) {
         this.jackson = jackson;
     }
 
     public static void main(String[] args) {
-        var context = SpringApplication.run(RmqStcApplication.class, args);
+        var context = SpringApplication.run(RmqOfficeApplication.class, args);
         var publisher = context.getBean(Publisher.class); // or move these bean definitions to separate @Configuration class
         publisher.publishMsg(Map.of("message", "Hello RabbitMQ DLQ"));
 
         // manually start the consumer
-//        var app = context.getBean(RmqStcApplication.class);
+//        var app = context.getBean(RmqOfficeApplication.class);
 //        app.consumer(); // manually start the consumer
     }
 

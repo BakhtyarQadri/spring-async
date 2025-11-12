@@ -8,10 +8,10 @@
         <version>1.0.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <artifactId>rmq-stc</artifactId>
+    <artifactId>rmq-office</artifactId>
     <version>1.0.0</version>
-    <name>rmq-stc</name>
-    <description>rmq-stc</description>
+    <name>rmq-office</name>
+    <description>rmq-office</description>
     <url/>
     <licenses>
         <license/>

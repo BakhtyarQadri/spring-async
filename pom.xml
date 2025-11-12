@@ -16,7 +16,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>rmq-java</module>
-        <module>rmq-stc</module>
+        <module>rmq-office</module>
     </modules>
     <url/>
     <licenses>

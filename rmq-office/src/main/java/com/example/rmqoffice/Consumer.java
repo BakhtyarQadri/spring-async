@@ -1,10 +1,14 @@
-package com.example.rmqstc;
+package com.example.rmqoffice;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HexFormat;
 import com.rabbitmq.client.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,7 +30,7 @@ public class Consumer extends DefaultConsumer {
     }
 
     @Override
-    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
+    public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
         try {
             var signedMsg = jackson.readValue(body, SignedMsg.class);
             System.out.println("received msg: " + signedMsg);
@@ -34,25 +38,41 @@ public class Consumer extends DefaultConsumer {
             if (!isValidSignature) {
                 throw new Exception("signature mismatched");
             }
-            if (true) throw new RuntimeException("exception occurred");
-            channel.basicAck(envelope.getDeliveryTag(), false); // manual acknowledgment
+//            if (true) return;
+//            throw new Exception("exception occurred");
+            CompletableFuture.runAsync(() -> runAsyncFlow(properties.getHeaders(), body, envelope.getDeliveryTag()) );
         } catch (Exception e) {
             System.out.println(e.getMessage());
+        } finally {
+            channel.basicAck(envelope.getDeliveryTag(), false);
+            System.out.println("msg acknowledged");
+        }
+    }
 
+    private void runAsyncFlow(Map<String, Object> msgHeaders, byte[] body, Long deliveryTag) {
+        try {
+//            if (true) return;
+            throw new Exception("exception occurred");
+//            System.out.println("msg processed successfully");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
             try {
                 // Get retry count from headers
-                var headers = (properties.getHeaders() == null) ? new HashMap<String, Object>() : properties.getHeaders();
+                var headers = (msgHeaders == null) ? new HashMap<String, Object>() : msgHeaders;
                 var retryCount = (Integer) headers.getOrDefault("x-retry-count", 0);
                 if (retryCount < 3) {
                     retryCount++;
                     headers.put("x-retry-count", retryCount); // upsert
                     var directExchangeName = "";
-                    var amqpBasicProperties = new AMQP.BasicProperties.Builder().headers(headers).build(); // .deliveryMode(2) -> persistent
+                    var amqpBasicProperties = new AMQP.BasicProperties.Builder()
+                            .contentType("text/plain")
+                            .deliveryMode(2)
+                            .headers(headers)
+                            .build();
                     channel.basicPublish(directExchangeName, routingKey, amqpBasicProperties, body);
-                    channel.basicAck(envelope.getDeliveryTag(), false); // manual acknowledgment for previous msg
                     System.out.println("retry attempt: " + retryCount);
                 } else { // Max retries exceeded - send to DLQ
-                    channel.basicNack(envelope.getDeliveryTag(), false, false); // requeueMsg (lastParam) = false -> send msg to DLQ if configured or dropped AND requeueMsg=true -> requeue the message
+                    channel.basicNack(deliveryTag, false, false); // requeueMsg (lastParam) = false -> send msg to DLQ if configured or dropped AND requeueMsg=true -> requeue the message
                     System.out.println("sent to dead letter queue");
                 }
             } catch (Exception ex) {

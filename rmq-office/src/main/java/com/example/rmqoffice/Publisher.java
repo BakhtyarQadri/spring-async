@@ -1,9 +1,9 @@
-package com.example.rmqstc;
+package com.example.rmqoffice;
 
 import java.util.HexFormat;
 import java.security.MessageDigest;
 import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.MessageProperties;
+
 import java.security.NoSuchAlgorithmException;
 import org.springframework.beans.factory.annotation.Value;
 import com.fasterxml.jackson.databind.ObjectMapper;
