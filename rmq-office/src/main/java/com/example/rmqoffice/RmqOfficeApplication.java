@@ -2,6 +2,7 @@ package com.example.rmqoffice;
 
 import java.util.Map;
 import java.util.HashMap;
+import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import org.springframework.boot.SpringApplication;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,6 +75,19 @@ public class RmqOfficeApplication {
         } catch (Exception e) {
             System.out.println("caught exception while configuring consumer queue with dead letter queue: " + e.getMessage());
             return null;
+        }
+    }
+
+    // Drawback: everytime, queue will be deleted (not useful)
+    private void deleteExistingQueue(Channel channel, String queueName) {
+        try {
+//            channel.queueDeclarePassive(queueName); // not needed
+            var ifUnused = false;
+            var ifEmpty = true;
+            channel.queueDelete(queueName, ifUnused, ifEmpty); // if queue not exists, nothing will happen, ifEmpty=true then delete otherwise throws exception
+            System.out.println("deleted existing empty queue: " + queueName);
+        } catch (Exception e) {
+            System.out.println("queue is not empty, not proceeding: " + e.getMessage());
         }
     }
 
